@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:ns1="http://schemas.android.com/tools">
+    <color name="ic_launcher_background">#0C1220</color>
+    <color name="md_theme_background">#0C1220</color>
+    <color name="md_theme_on_primary">#FFFFFF</color>
+    <color name="md_theme_on_surface">#E6EDF5</color>
+    <color name="md_theme_primary">#0A84FF</color>
+    <color name="md_theme_secondary">#5CE1E6</color>
+    <color name="md_theme_surface">#11192B</color>
+    <string name="app_name">Charging VinFast</string>
+    <string name="start_label">Bắt đầu sạc</string>
+    <string name="stop_label">Dừng</string>
+    <string name="title_status">Trạng thái sạc</string>
+    <style name="Theme.ChargingVinfast" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:statusBarColor" ns1:targetApi="l">@color/md_theme_background</item>
+        <item name="android:navigationBarColor" ns1:targetApi="l">@color/md_theme_background</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+</resources>
