@@ -1,6 +1,8 @@
 package com.example.chargingvinfast
 
 import android.content.Context
+import android.content.Intent
+import android.os.Build
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
@@ -15,6 +17,14 @@ class ChargingScheduler(private val context: Context) {
     fun startCharging() {
         NotificationHelper.ensureChannels(context)
         NotificationHelper.showStatusNotification(context)
+        
+        // Start foreground service for persistent background operation
+        val serviceIntent = Intent(context, ChargingForegroundService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.startForegroundService(serviceIntent)
+        } else {
+            context.startService(serviceIntent)
+        }
 
         val periodicRequest = PeriodicWorkRequestBuilder<ChargingWorker>(90, TimeUnit.MINUTES)
             .build()
@@ -39,6 +49,13 @@ class ChargingScheduler(private val context: Context) {
     fun stopCharging() {
         workManager.cancelUniqueWork(CHARGING_STATUS_WORK)
         workManager.cancelUniqueWork(CHARGING_ALARM_WORK)
+        
+        // Stop foreground service
+        val serviceIntent = Intent(context, ChargingForegroundService::class.java)
+        context.stopService(serviceIntent)
+        
+        // Cancel all notifications
+        NotificationHelper.cancelAllNotifications(context)
     }
 
     companion object {

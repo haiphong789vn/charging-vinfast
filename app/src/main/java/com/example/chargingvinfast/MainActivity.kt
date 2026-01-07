@@ -26,6 +26,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -41,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import com.example.chargingvinfast.ui.theme.ChargingVinfastTheme
+import kotlin.system.exitProcess
 
 class MainActivity : ComponentActivity() {
 
@@ -56,7 +58,10 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             ChargingVinfastTheme {
-                ChargingScreen(viewModel)
+                ChargingScreen(
+                    viewModel = viewModel,
+                    onExitApp = { exitAppCompletely() }
+                )
             }
         }
     }
@@ -72,10 +77,19 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    private fun exitAppCompletely() {
+        // Stop charging first to cancel all workers and notifications
+        viewModel.stopCharging()
+        // Finish all activities
+        finishAffinity()
+        // Exit the process
+        exitProcess(0)
+    }
 }
 
 @Composable
-fun ChargingScreen(viewModel: MainViewModel) {
+fun ChargingScreen(viewModel: MainViewModel, onExitApp: () -> Unit) {
     val uiState by viewModel.uiState.collectAsState()
 
     Scaffold { padding ->
@@ -103,6 +117,7 @@ fun ChargingScreen(viewModel: MainViewModel) {
                     isRunning = uiState.isRunning,
                     onStart = { viewModel.startCharging() },
                     onStop = { viewModel.stopCharging() },
+                    onExitApp = onExitApp,
                 )
             }
         }
@@ -125,12 +140,12 @@ private fun Header() {
         Text(
             text = "Charging Guardian",
             style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onSurface,
+            color = Color.White,
         )
         Text(
             text = "Theo dõi sạc và nhắc nhở định kỳ",
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+            color = Color.White.copy(alpha = 0.7f),
         )
     }
 }
@@ -149,7 +164,7 @@ private fun StatusCard(uiState: ChargingUiState) {
         ) {
             Text(
                 text = "Trạng thái",
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
+                color = Color.White.copy(alpha = 0.75f),
                 style = MaterialTheme.typography.labelLarge,
             )
             Text(
@@ -161,14 +176,14 @@ private fun StatusCard(uiState: ChargingUiState) {
                 val elapsedText = formatElapsed(uiState.startedAtMillis!!)
                 Text(
                     text = "Đã theo dõi: $elapsedText",
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                    color = Color.White.copy(alpha = 0.8f),
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = "Thông báo mỗi 1.5 giờ và chuông sau 5 giờ nếu bạn chưa dừng.",
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                color = Color.White.copy(alpha = 0.7f),
                 style = MaterialTheme.typography.bodyMedium,
             )
         }
@@ -180,6 +195,7 @@ private fun ActionButtons(
     isRunning: Boolean,
     onStart: () -> Unit,
     onStop: () -> Unit,
+    onExitApp: () -> Unit,
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -201,15 +217,29 @@ private fun ActionButtons(
             modifier = Modifier.fillMaxWidth(),
             enabled = isRunning,
             shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF212A3A)),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFFE53935),
+                disabledContainerColor = Color(0xFF424242)
+            ),
         ) {
-            Text(text = "Stop", color = MaterialTheme.colorScheme.onSurface, fontSize = 18.sp)
+            Text(text = "Stop", color = Color.White, fontSize = 18.sp)
+        }
+
+        OutlinedButton(
+            onClick = onExitApp,
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = Color(0xFFFF9800)
+            ),
+        ) {
+            Text(text = "Thoát hoàn toàn", color = Color(0xFFFF9800), fontSize = 16.sp)
         }
 
         Text(
-            text = "Ứng dụng vẫn hoạt động nền để gửi thông báo, phù hợp cho Galaxy S25 Ultra.",
+            text = "Ứng dụng vẫn hoạt động nền để gửi thông báo, phù hợp cho Galaxy S25 Ultra.\nẤn \"Thoát hoàn toàn\" để dừng mọi hoạt động và đóng app.",
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+            color = Color.White.copy(alpha = 0.6f),
             textAlign = TextAlign.Center,
         )
     }

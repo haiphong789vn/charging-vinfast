@@ -1,5 +1,6 @@
 package com.example.chargingvinfast
 
+import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -15,8 +16,10 @@ object NotificationHelper {
 
     private const val STATUS_CHANNEL_ID = "charging_status"
     private const val ALARM_CHANNEL_ID = "charging_alarm"
-    private const val STATUS_NOTIFICATION_ID = 101
+    const val FOREGROUND_CHANNEL_ID = "charging_foreground"
+    const val STATUS_NOTIFICATION_ID = 101
     private const val ALARM_NOTIFICATION_ID = 201
+    const val FOREGROUND_NOTIFICATION_ID = 301
 
     fun ensureChannels(context: Context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
@@ -45,8 +48,17 @@ object NotificationHelper {
             enableVibration(true)
         }
 
+        val foregroundChannel = NotificationChannel(
+            FOREGROUND_CHANNEL_ID,
+            "Dịch vụ chạy nền",
+            NotificationManager.IMPORTANCE_LOW,
+        ).apply {
+            description = "Dịch vụ theo dõi sạc chạy ở nền"
+        }
+
         manager.createNotificationChannel(statusChannel)
         manager.createNotificationChannel(alarmChannel)
+        manager.createNotificationChannel(foregroundChannel)
     }
 
     fun showStatusNotification(context: Context) {
@@ -74,6 +86,26 @@ object NotificationHelper {
             .setContentIntent(pendingIntent)
 
         NotificationManagerCompat.from(context).notify(ALARM_NOTIFICATION_ID, builder.build())
+    }
+
+    fun createForegroundNotification(context: Context): Notification {
+        ensureChannels(context)
+        val pendingIntent = pendingIntent(context)
+        return NotificationCompat.Builder(context, FOREGROUND_CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_charging)
+            .setContentTitle("Đang theo dõi sạc")
+            .setContentText("Ứng dụng đang chạy ở nền để theo dõi sạc pin")
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setOngoing(true)
+            .setContentIntent(pendingIntent)
+            .build()
+    }
+
+    fun cancelAllNotifications(context: Context) {
+        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        manager.cancel(STATUS_NOTIFICATION_ID)
+        manager.cancel(ALARM_NOTIFICATION_ID)
+        manager.cancel(FOREGROUND_NOTIFICATION_ID)
     }
 
     fun playAlarm(context: Context) {
