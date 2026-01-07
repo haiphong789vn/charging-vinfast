@@ -30,8 +30,12 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -43,6 +47,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import com.example.chargingvinfast.ui.theme.ChargingVinfastTheme
 import kotlin.system.exitProcess
+import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
 
@@ -152,6 +157,17 @@ private fun Header() {
 
 @Composable
 private fun StatusCard(uiState: ChargingUiState) {
+    // Timer state to trigger recomposition every second
+    var currentTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    
+    // Update current time every second when running
+    LaunchedEffect(uiState.isRunning) {
+        while (uiState.isRunning) {
+            delay(1000L)
+            currentTime = System.currentTimeMillis()
+        }
+    }
+    
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color(0xFF111A2D)),
@@ -173,7 +189,7 @@ private fun StatusCard(uiState: ChargingUiState) {
                 style = MaterialTheme.typography.titleLarge,
             )
             AnimatedVisibility(visible = uiState.isRunning && uiState.startedAtMillis != null) {
-                val elapsedText = formatElapsed(uiState.startedAtMillis!!)
+                val elapsedText = formatElapsed(uiState.startedAtMillis!!, currentTime)
                 Text(
                     text = "Đã theo dõi: $elapsedText",
                     color = Color.White.copy(alpha = 0.8f),
@@ -245,9 +261,10 @@ private fun ActionButtons(
     }
 }
 
-private fun formatElapsed(startMillis: Long): String {
-    val elapsed = System.currentTimeMillis() - startMillis
+private fun formatElapsed(startMillis: Long, currentMillis: Long): String {
+    val elapsed = currentMillis - startMillis
     val hours = elapsed / (1000 * 60 * 60)
     val minutes = (elapsed / (1000 * 60)) % 60
-    return String.format("%02d giờ %02d phút", hours, minutes)
+    val seconds = (elapsed / 1000) % 60
+    return String.format("%02d giờ %02d phút %02d giây", hours, minutes, seconds)
 }
