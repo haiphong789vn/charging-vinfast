@@ -88,17 +88,40 @@ object NotificationHelper {
         NotificationManagerCompat.from(context).notify(ALARM_NOTIFICATION_ID, builder.build())
     }
 
-    fun createForegroundNotification(context: Context): Notification {
+    fun createForegroundNotification(context: Context, elapsedTimeText: String? = null): Notification {
         ensureChannels(context)
         val pendingIntent = pendingIntent(context)
+        val contentText = if (elapsedTimeText != null) {
+            "Đã sạc: $elapsedTimeText"
+        } else {
+            "Ứng dụng đang chạy ở nền để theo dõi sạc pin"
+        }
         return NotificationCompat.Builder(context, FOREGROUND_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_charging)
             .setContentTitle("Đang theo dõi sạc")
-            .setContentText("Ứng dụng đang chạy ở nền để theo dõi sạc pin")
+            .setContentText(contentText)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true)
             .setContentIntent(pendingIntent)
             .build()
+    }
+
+    fun updateForegroundNotification(context: Context, elapsedTimeText: String) {
+        val notification = createForegroundNotification(context, elapsedTimeText)
+        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        manager.notify(FOREGROUND_NOTIFICATION_ID, notification)
+    }
+
+    fun formatElapsedTime(startMillis: Long): String {
+        val elapsed = System.currentTimeMillis() - startMillis
+        val totalMinutes = elapsed / (1000 * 60)
+        val hours = totalMinutes / 60
+        val minutes = totalMinutes % 60
+        return if (hours > 0) {
+            String.format("%d giờ %02d phút", hours, minutes)
+        } else {
+            String.format("%d phút", minutes)
+        }
     }
 
     fun cancelAllNotifications(context: Context) {
